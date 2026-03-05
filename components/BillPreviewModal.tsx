@@ -257,7 +257,10 @@ export const BillPreviewModal: React.FC<BillPreviewModalProps> = ({ room, onClos
   const downloadImage = () => {
     if (imgSrc) {
         const link = document.createElement('a');
-        link.download = `收据_${room.roomNo}_${dateStr}.png`;
+        // Add timestamp (HHMMSS) to prevent overwriting
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+        link.download = `收据_${room.roomNo}_${dateStr}_${timeStr}.png`;
         link.href = imgSrc;
         link.click();
     }
