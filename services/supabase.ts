@@ -4,12 +4,12 @@ const viteEnv = ((import.meta as any).env || {}) as Record<string, string | unde
 
 const supabaseUrl =
   viteEnv.VITE_SUPABASE_URL ||
-  'https://exsupxyolwkihmttjxty.supabase.co';
+  'https://jhdvuwzdzqujeopjwytg.supabase.co';
 
 const supabaseKey =
   viteEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
   viteEnv.VITE_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4c3VweHlvbHdraWhtdHRqeHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NTcyNjgsImV4cCI6MjA4NDQzMzI2OH0.7nOLlqhiDYkDr3B9LLlsIZbzrS7M_vLSyxprlIm9hz8';
+  'sb_publishable_vA45eVJ75Fg1L33lH-XjIA_LxmKpiAq';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
