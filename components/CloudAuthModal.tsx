@@ -43,11 +43,15 @@ export const CloudAuthModal: React.FC<CloudAuthModalProps> = ({
                 setTimeout(() => { onClose(); setMode('login'); }, 1500);
             }
         } catch(e: any) { setMsg({ type: 'err', text: e.message }); }
-        setLoading(false);
+        finally { setLoading(false); }
         return;
     }
 
-    if (!email) return setMsg({ type: 'err', text: '请填写邮箱' });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return setMsg({ type: 'err', text: '请填写邮箱' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return setMsg({ type: 'err', text: '邮箱格式不正确' });
+    }
     if (!password) return setMsg({ type: 'err', text: '请填写密码' });
     
     // --- MODE 2: Login / Signup ---
@@ -59,7 +63,7 @@ export const CloudAuthModal: React.FC<CloudAuthModalProps> = ({
     setLoading(true);
     try {
       const isSignup = mode === 'signup';
-      const res = await onLogin(email, password, isSignup);
+      const res = await onLogin(normalizedEmail, password, isSignup);
       
       if (res) {
         setMsg({ type: 'err', text: typeof res === 'string' ? res : '操作失败' });
@@ -69,8 +73,9 @@ export const CloudAuthModal: React.FC<CloudAuthModalProps> = ({
       }
     } catch (e: any) {
       setMsg({ type: 'err', text: e.message || 'Error' });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const switchMode = (m: any) => {
@@ -149,7 +154,10 @@ export const CloudAuthModal: React.FC<CloudAuthModalProps> = ({
                   <div className="relative">
                       <Mail size={16} className="absolute left-0 top-3 text-gray-400"/>
                       <input 
-                          type="email" 
+                          type="text" 
+                          inputMode="email"
+                          autoCapitalize="none"
+                          autoCorrect="off"
                           value={email} 
                           onChange={e => setEmail(e.target.value)} 
                           className="w-full border-b py-2 pl-6 text-base font-bold outline-none focus:border-blue-500 transition-colors" 

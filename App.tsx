@@ -62,34 +62,49 @@ export default function App() {
 
   // Cloud Sync State
   const [cloudUser, setCloudUser] = useState<User | null>(null);
+  const [isCloudHydrated, setIsCloudHydrated] = useState(false);
 
   // PWA Install Prompt State
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
 
+  const getUserStorageKey = (userId: string) => `${STORAGE_KEY_DATA}_${userId}`;
+
+  const replaceRooms = (rooms: Room[], desc: string) => {
+    setHistory({
+      archives: [{ data: rooms, desc, time: new Date().toISOString() }],
+      present: rooms,
+    });
+  };
+
+  const hydrateCloudRooms = async (userId: string) => {
+    setIsCloudHydrated(false);
+
+    const cachedRooms = safeGetStorage<Room[]>(getUserStorageKey(userId), []);
+    if (Array.isArray(cachedRooms) && cachedRooms.length > 0) {
+      replaceRooms(cachedRooms, '本地缓存');
+    }
+
+    try {
+      if (!supabase) return;
+      const cloudRooms = await loadRoomsFromSupabase(supabase, userId);
+      replaceRooms(cloudRooms, '云端同步');
+    } catch (error) {
+      console.warn('Cloud sync failed:', error);
+    } finally {
+      setIsCloudHydrated(true);
+    }
+  };
+
+  const activateCloudUser = (user: User) => {
+    setCloudUser(user);
+    window.setTimeout(() => {
+      hydrateCloudRooms(user.id);
+    }, 0);
+  };
+
   // --- Initialization ---
   useEffect(() => {
     let isMounted = true;
-
-    const applyRooms = (rooms: Room[], desc: string) => {
-      if (!isMounted) return;
-      setHistory({
-        archives: [{ data: rooms, desc, time: new Date().toISOString() }],
-        present: rooms,
-      });
-    };
-
-    const loadCloudRooms = async (userId: string) => {
-      const cachedRooms = safeGetStorage<Room[]>(STORAGE_KEY_DATA, []);
-      applyRooms(Array.isArray(cachedRooms) ? cachedRooms : [], '本地缓存');
-
-      try {
-        if (!supabase) return;
-        const cloudRooms = await loadRoomsFromSupabase(supabase, userId);
-        applyRooms(cloudRooms, '云端同步');
-      } catch (error) {
-        console.warn('Cloud sync failed:', error);
-      }
-    };
 
     const initApp = async () => {
       // 1. Load Local Config (Settings)
@@ -102,10 +117,11 @@ export default function App() {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             if (isMounted) setCloudUser(session.user);
-            await loadCloudRooms(session.user.id);
+            await hydrateCloudRooms(session.user.id);
           } else {
             if (isMounted) {
               setCloudUser(null);
+              setIsCloudHydrated(false);
               setHistory({ archives: [], present: [] });
               setView('list');
             }
@@ -118,7 +134,7 @@ export default function App() {
          // No Supabase Config: Load Local (Pure Offline Mode)
          let initialRooms = safeGetStorage<Room[]>(STORAGE_KEY_DATA, []);
          if (!Array.isArray(initialRooms)) initialRooms = [];
-         applyRooms(initialRooms, '初始状态');
+         replaceRooms(initialRooms, '初始状态');
          if (initialRooms.length === 0 && isMounted) setView('guide');
       }
 
@@ -132,13 +148,14 @@ export default function App() {
       setCloudUser(session?.user || null);
 
       if (event === 'SIGNED_IN' && session?.user) {
-        window.setTimeout(() => loadCloudRooms(session.user.id), 0);
+        activateCloudUser(session.user);
       }
 
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem(STORAGE_KEY_DATA);
         setHistory({ archives: [], present: [] });
         setSelectedIds(new Set());
+        setIsCloudHydrated(false);
         setView('list');
       }
     });
@@ -161,7 +178,8 @@ export default function App() {
   useEffect(() => {
     if (isLoaded && history.present) {
       if (cloudUser || !isSupabaseConfigured) {
-         localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(history.present));
+         const storageKey = cloudUser ? getUserStorageKey(cloudUser.id) : STORAGE_KEY_DATA;
+         localStorage.setItem(storageKey, JSON.stringify(history.present));
       }
     }
   }, [history.present, isLoaded, cloudUser]);
@@ -172,31 +190,32 @@ export default function App() {
 
   // --- AUTOMATIC CLOUD BACKUP EFFECT ---
   useEffect(() => {
-    if (!isLoaded || !supabase || !cloudUser) return;
+    if (!isLoaded || !supabase || !cloudUser || !isCloudHydrated) return;
     const timer = setTimeout(() => {
         saveRoomsToSupabase(supabase, cloudUser.id, history.present).catch(err => {
             console.warn("Auto backup failed:", err);
         });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [history.present, isLoaded, cloudUser]);
+  }, [history.present, isLoaded, cloudUser, isCloudHydrated]);
 
 
   // --- Handlers ---
   const handleCloudLogin = async (email: string, pass: string, isSignup: boolean) => {
     if (!supabase) return '系统未配置 Supabase';
-    const redirectUrl = window.location.origin + window.location.pathname;
+    const normalizedEmail = email.trim().toLowerCase();
     
     if (isSignup) {
       const { data, error } = await withTimeout(supabase.auth.signUp({
-          email, password: pass, options: { emailRedirectTo: redirectUrl } 
+          email: normalizedEmail,
+          password: pass
       }), '连接 Supabase 超时，请检查网络后再试');
       if (error) return error.message;
 
       const sessionUser = data.session?.user || data.user;
       if (!data.session && data.user) {
         const { data: loginData, error: loginError } = await withTimeout(
-          supabase.auth.signInWithPassword({ email, password: pass }),
+          supabase.auth.signInWithPassword({ email: normalizedEmail, password: pass }),
           '注册成功，但自动登录超时，请手动登录一次'
         );
 
@@ -205,53 +224,25 @@ export default function App() {
         }
 
         if (loginData.user) {
-          setCloudUser(loginData.user);
-          window.setTimeout(() => {
-            loadRoomsFromSupabase(supabase, loginData.user.id)
-              .then(rooms => {
-                setHistory({
-                  archives: [{ data: rooms, desc: '云端同步', time: new Date().toISOString() }],
-                  present: rooms,
-                });
-              })
-              .catch(error => console.warn('Cloud sync failed:', error));
-          }, 0);
+          activateCloudUser(loginData.user);
         }
 
         return;
       }
 
       if (sessionUser) {
-        setCloudUser(sessionUser);
-        window.setTimeout(() => {
-          loadRoomsFromSupabase(supabase, sessionUser.id)
-            .then(rooms => {
-              setHistory({
-                archives: [{ data: rooms, desc: '云端同步', time: new Date().toISOString() }],
-                present: rooms,
-              });
-            })
-            .catch(error => console.warn('Cloud sync failed:', error));
-        }, 0);
+        activateCloudUser(sessionUser);
+      } else {
+        return '注册没有返回用户信息，请稍后重试';
       }
       return;
     } else {
       const { data, error } = await withTimeout(
-        supabase.auth.signInWithPassword({ email, password: pass }),
+        supabase.auth.signInWithPassword({ email: normalizedEmail, password: pass }),
         '连接 Supabase 超时，请检查网络后再试'
       );
       if (!error && data.user) {
-        setCloudUser(data.user);
-        window.setTimeout(() => {
-          loadRoomsFromSupabase(supabase, data.user.id)
-            .then(rooms => {
-              setHistory({
-                archives: [{ data: rooms, desc: '云端同步', time: new Date().toISOString() }],
-                present: rooms,
-              });
-            })
-            .catch(error => console.warn('Cloud sync failed:', error));
-        }, 0);
+        activateCloudUser(data.user);
       }
       return error?.message;
     }
@@ -267,12 +258,15 @@ export default function App() {
   };
 
   const handleCloudLogout = async () => {
+    const userStorageKey = cloudUser ? getUserStorageKey(cloudUser.id) : null;
     if (supabase) {
         try { await supabase.auth.signOut(); } catch (e) {}
     }
     localStorage.removeItem(STORAGE_KEY_DATA);
+    if (userStorageKey) localStorage.removeItem(userStorageKey);
     setHistory({ archives: [], present: [] });
     setCloudUser(null);
+    setIsCloudHydrated(false);
     setSelectedIds(new Set());
   };
 
