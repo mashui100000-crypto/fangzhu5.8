@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { safeGetStorage, calculateBillPeriod } from './utils';
 import { STORAGE_KEY_CONFIG, STORAGE_KEY_DATA, DEFAULT_CONFIG } from './constants';
 import { Room, AppConfig, HistoryState, ActionHandlers, ModalState, InstallPromptEvent, BillRecord, BatchSettingsData } from './types';
+import { isSupabaseConfigured, supabase } from './services/supabase';
+import { loadRoomsFromSupabase, saveRoomsToSupabase } from './services/landlordBackup';
 
 // Components
 import { RoomListView } from './components/RoomListView';
@@ -19,6 +21,21 @@ import { GenericConfirmModal } from './components/GenericConfirmModal';
 import { MoveOutModal } from './components/MoveOutModal';
 import { BatchBillModal } from './components/BatchBillModal';
 import { CloudAuthModal } from './components/CloudAuthModal';
+
+const AUTH_TIMEOUT_MS = 20000;
+
+async function withTimeout<T>(promise: Promise<T>, message: string): Promise<T> {
+  let timeoutId: number | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), AUTH_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timeoutId) window.clearTimeout(timeoutId);
+  }
+}
 
 export default function App() {
   // --- Core State ---
@@ -44,182 +61,219 @@ export default function App() {
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
 
   // Cloud Sync State
-  const [cloudClient, setCloudClient] = useState<SupabaseClient | null>(null);
-  const [cloudUser, setCloudUser] = useState<any>(null);
-  const [isCloudConfigured, setIsCloudConfigured] = useState(false);
+  const [cloudUser, setCloudUser] = useState<User | null>(null);
 
   // PWA Install Prompt State
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
 
   // --- Initialization ---
   useEffect(() => {
+    let isMounted = true;
+
+    const applyRooms = (rooms: Room[], desc: string) => {
+      if (!isMounted) return;
+      setHistory({
+        archives: [{ data: rooms, desc, time: new Date().toISOString() }],
+        present: rooms,
+      });
+    };
+
+    const loadCloudRooms = async (userId: string) => {
+      const cachedRooms = safeGetStorage<Room[]>(STORAGE_KEY_DATA, []);
+      applyRooms(Array.isArray(cachedRooms) ? cachedRooms : [], '本地缓存');
+
+      try {
+        if (!supabase) return;
+        const cloudRooms = await loadRoomsFromSupabase(supabase, userId);
+        applyRooms(cloudRooms, '云端同步');
+      } catch (error) {
+        console.warn('Cloud sync failed:', error);
+      }
+    };
+
     const initApp = async () => {
       // 1. Load Local Config (Settings)
       const savedConfig = safeGetStorage(STORAGE_KEY_CONFIG, null);
-      if (savedConfig) setConfig(savedConfig);
+      if (savedConfig && isMounted) setConfig(savedConfig);
 
-      // 2. Setup Cloud & Check Auth
-      const url = DEFAULT_CONFIG.supabaseUrl?.trim();
-      const key = DEFAULT_CONFIG.supabaseKey?.trim();
-      const hasCloud = !!(url && key && url.startsWith('http'));
-      setIsCloudConfigured(hasCloud);
-
-      if (hasCloud) {
+      // 2. Supabase Auth session
+      if (isSupabaseConfigured && supabase) {
         try {
-          const client = createClient(url!, key!);
-          setCloudClient(client);
-
-          // Auth Check
-          const { data: { session } } = await client.auth.getSession();
+          const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
-            // Logged In: Load Data from LocalStorage (Cache) then Sync
-            setCloudUser(session.user);
-            let initialRooms = safeGetStorage<Room[]>(STORAGE_KEY_DATA, []);
-            if (!Array.isArray(initialRooms)) initialRooms = [];
-            setHistory({
-              archives: [{ data: initialRooms, desc: '初始状态', time: new Date().toISOString() }],
-              present: initialRooms
-            });
-            
-            // Trigger Sync
-            syncFromCloud(client, session.user.id);
-
-            // Listen for Auth Changes
-            const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
-              setCloudUser(session?.user || null);
-              if (event === 'SIGNED_OUT') {
-                 // Wipe data immediately on logout event
-                 setHistory({ archives: [], present: [] });
-              }
-            });
-            // Cleanup subscription handled globally/implicit for this effect logic
+            if (isMounted) setCloudUser(session.user);
+            await loadCloudRooms(session.user.id);
           } else {
-            // Not Logged In: EMPTY STATE (Requirement 1)
-            // We do NOT load localStorage data if user is not logged in.
-            setHistory({ archives: [], present: [] });
-            setView('list'); 
+            if (isMounted) {
+              setCloudUser(null);
+              setHistory({ archives: [], present: [] });
+              setView('list');
+            }
           }
         } catch (e) {
            console.error("Auth check failed", e);
-           // Fallback: If auth fails entirely, assume safe mode (empty)
-           setHistory({ archives: [], present: [] });
+           if (isMounted) setHistory({ archives: [], present: [] });
         }
       } else {
-         // No Cloud Config: Load Local (Pure Offline Mode)
+         // No Supabase Config: Load Local (Pure Offline Mode)
          let initialRooms = safeGetStorage<Room[]>(STORAGE_KEY_DATA, []);
          if (!Array.isArray(initialRooms)) initialRooms = [];
-         setHistory({
-            archives: [{ data: initialRooms, desc: '初始状态', time: new Date().toISOString() }],
-            present: initialRooms
-         });
-         if (initialRooms.length === 0) setView('guide');
+         applyRooms(initialRooms, '初始状态');
+         if (initialRooms.length === 0 && isMounted) setView('guide');
       }
 
-      setIsLoaded(true);
+      if (isMounted) setIsLoaded(true);
     };
 
     initApp();
+
+    const authListener = supabase?.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      setCloudUser(session?.user || null);
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        window.setTimeout(() => loadCloudRooms(session.user.id), 0);
+      }
+
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem(STORAGE_KEY_DATA);
+        setHistory({ archives: [], present: [] });
+        setSelectedIds(new Set());
+        setView('list');
+      }
+    });
+    const subscription = authListener?.data.subscription;
 
     const handler = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e as InstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
   }, []); // Only run once on mount
 
   // --- Auto Save to LocalStorage ---
-  // Only save if logged in or using offline mode
+  // Only save if logged in or using offline mode.
   useEffect(() => {
     if (isLoaded && history.present) {
-      if (cloudUser || !isCloudConfigured) {
+      if (cloudUser || !isSupabaseConfigured) {
          localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(history.present));
       }
     }
-  }, [history.present, isLoaded, cloudUser, isCloudConfigured]);
+  }, [history.present, isLoaded, cloudUser]);
 
   useEffect(() => {
     if (isLoaded) localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
   }, [config, isLoaded]);
 
-  // --- Cloud Sync Logic ---
-  // Download Data
-  const syncFromCloud = async (client: SupabaseClient, userId: string) => {
-    const { data, error } = await client
-      .from('landlord_backup')
-      .select('data')
-      .eq('user_id', userId)
-      .single();
-    
-    if (data && data.data) {
-       setHistory(prev => ({
-           ...prev,
-           present: data.data,
-           archives: [{ data: data.data, desc: '云端同步', time: new Date().toISOString() }, ...prev.archives].slice(0, 50)
-       }));
-    }
-  };
-
-  // Upload Data
-  const syncToCloud = async (client: SupabaseClient, userId: string, rooms: Room[]) => {
-      await client.from('landlord_backup').upsert({
-          user_id: userId,
-          data: rooms,
-          updated_at: new Date().toISOString()
-      });
-  };
-
   // --- AUTOMATIC CLOUD BACKUP EFFECT ---
   useEffect(() => {
-    if (!isLoaded || !cloudClient || !cloudUser) return;
+    if (!isLoaded || !supabase || !cloudUser) return;
     const timer = setTimeout(() => {
-        syncToCloud(cloudClient, cloudUser.id, history.present).catch(err => {
+        saveRoomsToSupabase(supabase, cloudUser.id, history.present).catch(err => {
             console.warn("Auto backup failed:", err);
         });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [history.present, isLoaded, cloudClient, cloudUser]);
+  }, [history.present, isLoaded, cloudUser]);
 
 
   // --- Handlers ---
   const handleCloudLogin = async (email: string, pass: string, isSignup: boolean) => {
-    if (!cloudClient) return '系统未配置数据库';
+    if (!supabase) return '系统未配置 Supabase';
     const redirectUrl = window.location.origin + window.location.pathname;
     
     if (isSignup) {
-      const { data, error } = await cloudClient.auth.signUp({ 
+      const { data, error } = await withTimeout(supabase.auth.signUp({
           email, password: pass, options: { emailRedirectTo: redirectUrl } 
-      });
+      }), '连接 Supabase 超时，请检查网络后再试');
       if (error) return error.message;
-      if (data.user && !data.session) return 'NEED_CONFIRMATION';
+
+      const sessionUser = data.session?.user || data.user;
+      if (!data.session && data.user) {
+        const { data: loginData, error: loginError } = await withTimeout(
+          supabase.auth.signInWithPassword({ email, password: pass }),
+          '注册成功，但自动登录超时，请手动登录一次'
+        );
+
+        if (loginError) {
+          return '注册成功，但 Supabase 后台仍开启了邮箱确认。请关闭 Authentication > Providers > Email > Confirm email 后再注册。';
+        }
+
+        if (loginData.user) {
+          setCloudUser(loginData.user);
+          window.setTimeout(() => {
+            loadRoomsFromSupabase(supabase, loginData.user.id)
+              .then(rooms => {
+                setHistory({
+                  archives: [{ data: rooms, desc: '云端同步', time: new Date().toISOString() }],
+                  present: rooms,
+                });
+              })
+              .catch(error => console.warn('Cloud sync failed:', error));
+          }, 0);
+        }
+
+        return;
+      }
+
+      if (sessionUser) {
+        setCloudUser(sessionUser);
+        window.setTimeout(() => {
+          loadRoomsFromSupabase(supabase, sessionUser.id)
+            .then(rooms => {
+              setHistory({
+                archives: [{ data: rooms, desc: '云端同步', time: new Date().toISOString() }],
+                present: rooms,
+              });
+            })
+            .catch(error => console.warn('Cloud sync failed:', error));
+        }, 0);
+      }
       return;
     } else {
-      const { error } = await cloudClient.auth.signInWithPassword({ email, password: pass });
-      if (!error) {
-        // Force reload to trigger initApp cleanly with session
-        window.location.reload(); 
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password: pass }),
+        '连接 Supabase 超时，请检查网络后再试'
+      );
+      if (!error && data.user) {
+        setCloudUser(data.user);
+        window.setTimeout(() => {
+          loadRoomsFromSupabase(supabase, data.user.id)
+            .then(rooms => {
+              setHistory({
+                archives: [{ data: rooms, desc: '云端同步', time: new Date().toISOString() }],
+                present: rooms,
+              });
+            })
+            .catch(error => console.warn('Cloud sync failed:', error));
+        }, 0);
       }
       return error?.message;
     }
   };
 
   const handleUpdatePassword = async (pass: string) => {
-    if (!cloudClient) return '系统未配置数据库';
-    const { error } = await cloudClient.auth.updateUser({ password: pass });
+    if (!supabase) return '系统未配置 Supabase';
+    const { error } = await withTimeout(
+      supabase.auth.updateUser({ password: pass }),
+      '连接 Supabase 超时，请检查网络后再试'
+    );
     return error?.message;
   };
 
   const handleCloudLogout = async () => {
-    if (cloudClient) {
-        try { await cloudClient.auth.signOut(); } catch (e) {}
+    if (supabase) {
+        try { await supabase.auth.signOut(); } catch (e) {}
     }
-    localStorage.clear();
-    sessionStorage.clear();
+    localStorage.removeItem(STORAGE_KEY_DATA);
     setHistory({ archives: [], present: [] });
-    setConfig(DEFAULT_CONFIG);
     setCloudUser(null);
     setSelectedIds(new Set());
-    window.location.reload();
   };
 
   // --- Calculation Helpers ---

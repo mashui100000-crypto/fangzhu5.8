@@ -61,13 +61,11 @@ export const CloudAuthModal: React.FC<CloudAuthModalProps> = ({
       const isSignup = mode === 'signup';
       const res = await onLogin(email, password, isSignup);
       
-      if (res === 'NEED_CONFIRMATION') {
-        setMsg({ type: 'success', text: '注册成功！请前往邮箱验证。' });
-      } else if (res) {
+      if (res) {
         setMsg({ type: 'err', text: typeof res === 'string' ? res : '操作失败' });
       } else {
-        setMsg({ type: 'success', text: isSignup ? '注册并登录成功' : '登录成功' });
-        if (!isSignup) onClose();
+        setMsg({ type: 'success', text: isSignup ? '注册成功，已登录' : '登录成功' });
+        onClose();
       }
     } catch (e: any) {
       setMsg({ type: 'err', text: e.message || 'Error' });

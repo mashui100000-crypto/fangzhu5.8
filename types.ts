@@ -55,9 +55,6 @@ export interface Room {
 
 export interface AppConfig {
   defaultRent: string;
-  // Cloud Sync Config
-  supabaseUrl?: string;
-  supabaseKey?: string;
 }
 
 export interface HistoryItem {
