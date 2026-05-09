@@ -15,6 +15,17 @@ export const BillPreviewModal: React.FC<BillPreviewModalProps> = ({ room, onClos
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const sanitizeFilenamePart = (value: string | number | undefined, fallback: string) => {
+    const cleaned = String(value || '')
+      .trim()
+      .replace(/[\\/:*?"<>|#%&{}$!'@+`=]/g, '-')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return cleaned || fallback;
+  };
+
   // Dates
   const [startDate] = useState(() => {
     if (room.billStartDate) return room.billStartDate;
@@ -55,6 +66,23 @@ export const BillPreviewModal: React.FC<BillPreviewModalProps> = ({ room, onClos
   const xTotal = (room.extraFees || []).reduce((s, i) => s + getVal(i.amount), 0);
   const total = getVal(room.rent) + eTotal + wTotal + xTotal;
   const depositVal = getVal(room.deposit);
+
+  const buildUniqueBillFilename = () => {
+    const roomNo = sanitizeFilenamePart(room.roomNo, 'room');
+    const roomId = sanitizeFilenamePart(room.id, 'no-id').slice(0, 12);
+    const periodStart = sanitizeFilenamePart(startDate, 'start');
+    const periodEnd = sanitizeFilenamePart(endDate, 'end');
+    const stamp = new Date()
+      .toISOString()
+      .replace(/\D/g, '')
+      .slice(0, 17);
+    const random =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID().slice(0, 8)
+        : Math.random().toString(36).slice(2, 10);
+
+    return `bill_${roomNo}_${roomId}_${periodStart}_${periodEnd}_${stamp}_${random}.png`;
+  };
   
   const dateStr = useMemo(() => {
     if (!startDate || !endDate) return '';
@@ -257,12 +285,12 @@ export const BillPreviewModal: React.FC<BillPreviewModalProps> = ({ room, onClos
   const downloadImage = () => {
     if (imgSrc) {
         const link = document.createElement('a');
-        // Add timestamp (HHMMSS) to prevent overwriting
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-        link.download = `收据_${room.roomNo}_${dateStr}_${timeStr}.png`;
+        // Include room id, bill period, milliseconds, and random suffix to avoid overwrites.
+        link.download = buildUniqueBillFilename();
         link.href = imgSrc;
+        document.body.appendChild(link);
         link.click();
+        link.remove();
     }
   };
 
