@@ -41,17 +41,26 @@ Reviewed the React/Vite frontend, Cloudflare Pages deployment files, Supabase cl
 - Impact: Users could choose weaker passwords. This is only frontend validation; server-side Supabase password policy should still be configured in Auth settings when available.
 - Fix: Raised frontend minimum to 8 characters.
 
-## Remaining Risks
-
-### SEC-005 - Tailwind CDN script runs with full page privileges
+### SEC-005 - Tailwind CDN script ran with full page privileges
 
 - Severity: Medium
-- Location: `index.html:17`
-- Evidence: The app loads `https://cdn.tailwindcss.com` in production.
-- Impact: Any compromised third-party script loaded here can read page data and browser storage available to the app origin. This is a supply-chain risk.
-- Recommended fix: Replace the CDN script with a local Tailwind build step and static CSS. This is more involved because the current project relies on runtime Tailwind generation.
+- Location: `index.html`
+- Evidence: The app previously loaded `https://cdn.tailwindcss.com` in production.
+- Impact: Any compromised third-party script loaded here could read page data and browser storage available to the app origin. It also made styles depend on an external network request.
+- Fix: Replaced the CDN script with local Tailwind/PostCSS build output imported from `index.tsx`.
+- Verification: Production HTML no longer contains `cdn.tailwindcss`, `esm.sh`, `icons8`, or `/index.css`; it includes a local hashed CSS asset.
 
-### SEC-006 - Browser localStorage contains room data/session-side state
+### SEC-006 - PWA install assets depended on remote icon files
+
+- Severity: Low
+- Location: `manifest.json`, `index.html`
+- Evidence: Manifest and Apple touch icon previously used `img.icons8.com`.
+- Impact: Installed app icons and offline behavior depended on a third-party network request.
+- Fix: Added local PNG icons in `public/icons/` and updated manifest/apple icon links.
+
+## Remaining Risks
+
+### SEC-007 - Browser localStorage contains room data/session-side state
 
 - Severity: Low to Medium
 - Location: `App.tsx` localStorage usage

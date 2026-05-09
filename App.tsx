@@ -332,7 +332,15 @@ export default function App() {
   };
 
   const handleInstallApp = async () => {
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      setModal({
+        type: 'genericConfirm',
+        title: '安装到手机',
+        content: '安卓 Chrome/Edge：点浏览器菜单，选择“安装应用”或“添加到主屏幕”。苹果 Safari：点分享按钮，选择“添加到主屏幕”。安装后可以像普通 App 一样从桌面打开。',
+        onConfirm: () => {},
+      });
+      return;
+    }
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === 'accepted') setInstallPrompt(null);

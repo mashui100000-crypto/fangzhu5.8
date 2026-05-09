@@ -197,6 +197,11 @@ export const RoomListView: React.FC<RoomListViewProps> = ({
                          <Download size={12}/> <span>安装</span>
                        </button>
                     )}
+                    {!installPrompt && (
+                       <button onClick={onInstall} className="flex items-center justify-center gap-1 bg-black text-white px-2 py-1.5 rounded-full text-xs font-bold shadow-md hover:scale-105 transition-transform whitespace-nowrap">
+                         <Download size={12}/> <span>装手机</span>
+                       </button>
+                    )}
                     <button onClick={() => setModal({ type: 'cloudAuth' })} className="flex items-center justify-center gap-1 bg-white border border-blue-100 text-blue-600 px-2 py-1.5 rounded-full text-xs font-bold hover:bg-blue-50 shadow-sm whitespace-nowrap">
                       <Cloud size={12}/> <span>云同步</span>
                     </button>
