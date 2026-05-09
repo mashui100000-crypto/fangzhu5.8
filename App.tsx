@@ -96,6 +96,11 @@ export default function App() {
     }
   };
 
+  const loadCachedRoomsForUser = (userId: string) => {
+    const cachedRooms = safeGetStorage<Room[]>(getUserStorageKey(userId), []);
+    replaceRooms(Array.isArray(cachedRooms) ? cachedRooms : [], '本地缓存');
+  };
+
   const activateCloudUser = (user: User) => {
     setCloudUser(user);
     window.setTimeout(() => {
@@ -118,7 +123,10 @@ export default function App() {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             if (isMounted) setCloudUser(session.user);
-            await hydrateCloudRooms(session.user.id);
+            loadCachedRoomsForUser(session.user.id);
+            if (isMounted) setIsLoaded(true);
+            hydrateCloudRooms(session.user.id);
+            return;
           } else {
             if (isMounted) {
               setCloudUser(null);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rent-manager-v26';
+const CACHE_NAME = 'rent-manager-v27';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -31,6 +31,36 @@ self.addEventListener('fetch', (event) => {
     requestUrl.pathname.startsWith('/rest/') ||
     requestUrl.pathname.startsWith('/storage/')
   ) {
+    return;
+  }
+
+  const isStaticAsset =
+    requestUrl.pathname.startsWith('/assets/') ||
+    requestUrl.pathname.startsWith('/icons/') ||
+    requestUrl.pathname.endsWith('.png') ||
+    requestUrl.pathname.endsWith('.css') ||
+    requestUrl.pathname.endsWith('.js') ||
+    requestUrl.pathname.endsWith('.json');
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse;
+
+        return fetch(event.request).then((response) => {
+          if (!response || response.status !== 200 || response.type === 'opaque') {
+            return response;
+          }
+
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return response;
+        });
+      })
+    );
     return;
   }
 
