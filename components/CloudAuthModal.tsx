@@ -32,7 +32,7 @@ export const CloudAuthModal: React.FC<CloudAuthModalProps> = ({
     if (mode === 'update') {
         if (!password) return setMsg({ type: 'err', text: '请输入新密码' });
         if (password !== confirmPass) return setMsg({ type: 'err', text: '两次密码输入不一致' });
-        if (password.length < 6) return setMsg({ type: 'err', text: '密码长度至少6位' });
+        if (password.length < 8) return setMsg({ type: 'err', text: '密码长度至少8位' });
 
         setLoading(true);
         try {
@@ -57,7 +57,7 @@ export const CloudAuthModal: React.FC<CloudAuthModalProps> = ({
     // --- MODE 2: Login / Signup ---
     if (mode === 'signup') {
         if (password !== confirmPass) return setMsg({ type: 'err', text: '两次密码输入不一致' });
-        if (password.length < 6) return setMsg({ type: 'err', text: '密码长度至少6位' });
+        if (password.length < 8) return setMsg({ type: 'err', text: '密码长度至少8位' });
     }
     
     setLoading(true);
