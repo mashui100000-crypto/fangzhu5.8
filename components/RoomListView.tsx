@@ -207,6 +207,20 @@ export const RoomListView: React.FC<RoomListViewProps> = ({
             </div>
           )}
         </div>
+
+        {!batch.isMode && (
+          <div className="px-4 pb-2">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+              <span className="font-bold leading-4">注意：点 App 下载到本地更流畅，并可防止数据丢失。</span>
+              <button
+                onClick={() => setModal({ type: 'contactAuthor' })}
+                className="flex-shrink-0 rounded-full bg-white px-2 py-1 font-bold text-amber-700 shadow-sm"
+              >
+                联系作者
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* Compressed Filters */}
         <div className="bg-white/50 backdrop-blur-sm">

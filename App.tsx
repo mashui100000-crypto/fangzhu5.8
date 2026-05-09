@@ -22,6 +22,7 @@ import { MoveOutModal } from './components/MoveOutModal';
 import { BatchBillModal } from './components/BatchBillModal';
 import { CloudAuthModal } from './components/CloudAuthModal';
 import { InstallGuideModal } from './components/InstallGuideModal';
+import { ContactAuthorModal } from './components/ContactAuthorModal';
 
 const AUTH_TIMEOUT_MS = 20000;
 
@@ -625,6 +626,10 @@ export default function App() {
           onInstall={handleInstallApp}
           onClose={() => setModal({ type: null })}
         />
+      )}
+
+      {modal.type === 'contactAuthor' && (
+        <ContactAuthorModal onClose={() => setModal({ type: null })} />
       )}
     </div>
   );

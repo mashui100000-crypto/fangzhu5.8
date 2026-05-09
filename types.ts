@@ -99,6 +99,7 @@ export type ModalType =
   | 'billHistory'
   | 'cloudAuth'
   | 'installGuide'
+  | 'contactAuthor'
   | null;
 
 export interface ModalState {
