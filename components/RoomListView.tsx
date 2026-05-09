@@ -5,7 +5,7 @@ import {
   Building2, RotateCcw, FileText, Square, CheckCircle, Plus,
   ListChecks, Copy, Download, Cloud, AlertCircle, Check, Settings2
 } from 'lucide-react';
-import { Room, AppConfig, ActionHandlers, ModalState, InstallPromptEvent } from '../types';
+import { Room, AppConfig, ActionHandlers, ModalState } from '../types';
 import { getBuildingName } from '../utils';
 
 interface RoomListViewProps {
@@ -35,15 +35,13 @@ interface RoomListViewProps {
   setModal: React.Dispatch<React.SetStateAction<ModalState>>;
   confirmAction: (title: string, content: string, action: () => void) => void;
   config: AppConfig;
-  installPrompt: InstallPromptEvent | null;
-  onInstall: () => void;
   cloudUser: any;
 }
 
 export const RoomListView: React.FC<RoomListViewProps> = ({ 
   rooms, search, filter, batch, actions, navigate, 
   setModal, openGuide, confirmAction, config,
-  installPrompt, onInstall, cloudUser
+  cloudUser
 }) => {
   const getVal = (v: any) => parseFloat(v) || 0;
 
@@ -192,16 +190,9 @@ export const RoomListView: React.FC<RoomListViewProps> = ({
 
               <div className="flex-1 flex justify-end pl-2">
                  <div className="flex items-center gap-2">
-                    {installPrompt && (
-                       <button onClick={onInstall} className="flex items-center justify-center gap-1 bg-black text-white px-2 py-1.5 rounded-full text-xs font-bold shadow-md hover:scale-105 transition-transform whitespace-nowrap">
-                         <Download size={12}/> <span>安装</span>
-                       </button>
-                    )}
-                    {!installPrompt && (
-                       <button onClick={onInstall} className="flex items-center justify-center gap-1 bg-black text-white px-2 py-1.5 rounded-full text-xs font-bold shadow-md hover:scale-105 transition-transform whitespace-nowrap">
-                         <Download size={12}/> <span>装手机</span>
-                       </button>
-                    )}
+                    <button onClick={() => setModal({ type: 'installGuide' })} className="flex items-center justify-center gap-1 bg-black text-white px-2 py-1.5 rounded-full text-xs font-bold shadow-md hover:scale-105 transition-transform whitespace-nowrap">
+                      <Download size={12}/> <span>装手机</span>
+                    </button>
                     <button onClick={() => setModal({ type: 'cloudAuth' })} className="flex items-center justify-center gap-1 bg-white border border-blue-100 text-blue-600 px-2 py-1.5 rounded-full text-xs font-bold hover:bg-blue-50 shadow-sm whitespace-nowrap">
                       <Cloud size={12}/> <span>云同步</span>
                     </button>

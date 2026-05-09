@@ -98,6 +98,7 @@ export type ModalType =
   | 'genericConfirm' 
   | 'billHistory'
   | 'cloudAuth'
+  | 'installGuide'
   | null;
 
 export interface ModalState {

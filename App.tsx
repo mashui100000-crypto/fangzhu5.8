@@ -21,6 +21,7 @@ import { GenericConfirmModal } from './components/GenericConfirmModal';
 import { MoveOutModal } from './components/MoveOutModal';
 import { BatchBillModal } from './components/BatchBillModal';
 import { CloudAuthModal } from './components/CloudAuthModal';
+import { InstallGuideModal } from './components/InstallGuideModal';
 
 const AUTH_TIMEOUT_MS = 20000;
 
@@ -332,16 +333,8 @@ export default function App() {
   };
 
   const handleInstallApp = async () => {
-    if (!installPrompt) {
-      setModal({
-        type: 'genericConfirm',
-        title: '安装到手机',
-        content: '安卓 Chrome/Edge：点浏览器菜单，选择“安装应用”或“添加到主屏幕”。苹果 Safari：点分享按钮，选择“添加到主屏幕”。安装后可以像普通 App 一样从桌面打开。',
-        onConfirm: () => {},
-      });
-      return;
-    }
-    installPrompt.prompt();
+    if (!installPrompt) return;
+    await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === 'accepted') setInstallPrompt(null);
   };
@@ -530,8 +523,6 @@ export default function App() {
           setModal={setModal}
           confirmAction={confirmAction}
           config={config}
-          installPrompt={installPrompt}
-          onInstall={handleInstallApp}
           cloudUser={cloudUser}
         />
       )}
@@ -616,6 +607,14 @@ export default function App() {
           onUpdatePassword={handleUpdatePassword}
           onLogout={handleCloudLogout}
           currentUser={cloudUser}
+          onClose={() => setModal({ type: null })}
+        />
+      )}
+
+      {modal.type === 'installGuide' && (
+        <InstallGuideModal
+          installPrompt={installPrompt}
+          onInstall={handleInstallApp}
           onClose={() => setModal({ type: null })}
         />
       )}
