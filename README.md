@@ -1,20 +1,92 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 房租管家
 
-# Run and deploy your AI Studio app
+面向房东和出租房管理场景的移动端 Web 应用。项目覆盖房间管理、租客信息、租金/水电费计算、批量结算、账单历史、云端备份和 PWA 安装等核心流程，目标是让多房源收租记录更清晰、更容易长期维护。
 
-This contains everything you need to run your app locally.
+在线体验：https://fangzu123.pages.dev
 
-View your app in AI Studio: https://ai.studio/apps/4afee87f-e293-4a3b-a636-9f66e1b35106
+## 技术栈
 
-## Run Locally
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- Supabase
+- PWA / Service Worker
+- lucide-react
 
-**Prerequisites:**  Node.js
+## 核心功能
 
+- 房间管理：支持新增房间、批量生成房间、编辑房间信息、退租处理和房间状态维护。
+- 租客管理：记录租客姓名、联系方式、入住信息、租金、押金和备注等信息。
+- 账单计算：支持租金、水费、电费、额外费用和总应收金额计算。
+- 收租流程：支持单房间结算、批量开启新月份、账单预览、历史账单查看和恢复。
+- 搜索筛选：支持按楼栋、房间号、收租日期和收款状态筛选，方便快速定位房源。
+- 数据同步：接入 Supabase，支持账号登录、云端备份和多设备数据同步。
+- 移动端体验：按照手机优先的方式设计界面，并支持 PWA 安装到桌面。
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 项目亮点
+
+- 完整业务闭环：从房间录入、租客维护、费用计算、收租确认到历史记录，覆盖出租房管理的主要工作流。
+- 批量操作能力：支持批量创建房间、批量设置收租日期、批量结算新月份，减少重复录入。
+- 本地与云端结合：本地缓存保证基础可用性，Supabase 云端备份降低数据丢失风险。
+- 面向真实使用场景：界面和交互围绕手机端操作优化，适合在收租、查房、对账时快速使用。
+- 安全意识：项目中对 Supabase RLS、Service Worker 缓存范围、生产环境第三方依赖和安全响应头做过检查与优化。
+
+## 适用场景
+
+- 小型房东记录出租房、租客和每月收租状态。
+- 合租、公寓、城中村等多房间场景的账单管理。
+- 学习 React + TypeScript + Supabase 完整应用开发流程。
+
+## 本地运行
+
+```bash
+npm install
+npm run dev
+```
+
+构建生产版本：
+
+```bash
+npm run build
+npm run preview
+```
+
+## 环境变量
+
+项目使用 Supabase 进行云端备份和登录能力。运行云同步相关功能前，需要配置 Supabase 项目地址和匿名访问密钥。
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## 项目结构
+
+```text
+.
+├── components/       # 页面组件、弹窗和业务视图
+├── services/         # Supabase 和云端备份相关逻辑
+├── public/           # PWA manifest、图标和 Service Worker
+├── App.tsx           # 应用入口和主要状态组织
+├── types.ts          # TypeScript 类型定义
+├── utils.ts          # 账单、日期等通用工具函数
+└── vite.config.ts    # Vite 配置
+```
+
+## 开发重点
+
+这个项目不是单纯的页面练习，而是围绕一个具体业务场景做的完整 Web 应用实践。开发过程中重点处理了以下问题：
+
+- 如何把房间、租客、账单、历史记录拆成清晰的数据结构。
+- 如何让批量操作不破坏单房间的独立状态。
+- 如何在本地缓存和云端同步之间保持数据一致性。
+- 如何让 PWA 在移动端更接近原生应用的使用体验。
+- 如何避免生产环境中不必要的第三方依赖和缓存风险。
+
+## 后续计划
+
+- 增加更多账单导出能力，例如 CSV 或 Excel。
+- 增加房间维度的收支统计图表。
+- 优化 Supabase 数据表结构和权限策略说明。
+- 补充项目截图和主要业务流程演示。
