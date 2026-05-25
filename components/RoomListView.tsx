@@ -3,7 +3,7 @@ import React from 'react';
 import { 
   X, CheckSquare, Search, BookOpen, History, 
   Building2, RotateCcw, FileText, Square, CheckCircle, Plus,
-  ListChecks, Copy, Download, Cloud, AlertCircle, Check, Settings2
+  ListChecks, Copy, Download, Cloud, AlertCircle, Check, Settings2, MessageCircle
 } from 'lucide-react';
 import { Room, AppConfig, ActionHandlers, ModalState } from '../types';
 import { getBuildingName } from '../utils';
@@ -188,8 +188,8 @@ export const RoomListView: React.FC<RoomListViewProps> = ({
                 <h1 className="text-xl font-black text-gray-800">房租管家</h1>
               </div>
 
-              <div className="flex-1 flex justify-end pl-2">
-                 <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0 flex justify-end pl-2">
+                 <div className="flex max-w-full items-center gap-2 overflow-x-auto no-scrollbar">
                     <button onClick={() => setModal({ type: 'installGuide' })} className="flex items-center justify-center gap-1 bg-black text-white px-2 py-1.5 rounded-full text-xs font-bold shadow-md hover:scale-105 transition-transform whitespace-nowrap">
                       <Download size={12}/> <span>App</span>
                     </button>
@@ -202,24 +202,14 @@ export const RoomListView: React.FC<RoomListViewProps> = ({
                     <button onClick={() => setModal({ type: 'history' })} className="flex items-center justify-center gap-1 bg-gray-100 text-gray-700 px-2 py-1.5 rounded-full text-xs font-bold hover:bg-gray-200 whitespace-nowrap">
                       <History size={12}/> <span>历史</span>
                     </button>
+                    <button onClick={() => setModal({ type: 'contactAuthor' })} className="flex items-center justify-center gap-1 bg-amber-50 border border-amber-100 text-amber-700 px-2 py-1.5 rounded-full text-xs font-bold hover:bg-amber-100 shadow-sm whitespace-nowrap">
+                      <MessageCircle size={12}/> <span>联系作者</span>
+                    </button>
                  </div>
               </div>
             </div>
           )}
         </div>
-
-        {!batch.isMode && (
-          <div className="px-4 pb-2">
-            <div className="flex items-center justify-end gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-              <button
-                onClick={() => setModal({ type: 'contactAuthor' })}
-                className="flex-shrink-0 rounded-full bg-white px-2 py-1 font-bold text-amber-700 shadow-sm"
-              >
-                联系作者
-              </button>
-            </div>
-          </div>
-        )}
         
         {/* Compressed Filters */}
         <div className="bg-white/50 backdrop-blur-sm">
