@@ -210,8 +210,7 @@ export const RoomListView: React.FC<RoomListViewProps> = ({
 
         {!batch.isMode && (
           <div className="px-4 pb-2">
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-              <span className="font-bold leading-4">建议把网站添加到手机主屏幕，打开更流畅，也能降低数据丢失风险。不同手机和浏览器操作略有不同，可按提示安装或搜索教程。</span>
+            <div className="flex items-center justify-end gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
               <button
                 onClick={() => setModal({ type: 'contactAuthor' })}
                 className="flex-shrink-0 rounded-full bg-white px-2 py-1 font-bold text-amber-700 shadow-sm"
