@@ -1,0 +1,309 @@
+.page {
+  padding: 24rpx;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.title {
+  color: #111827;
+  font-size: 44rpx;
+  font-weight: 900;
+}
+
+.subtitle {
+  margin-top: 6rpx;
+  color: #64748b;
+  font-size: 22rpx;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12rpx;
+}
+
+.tool {
+  min-width: 112rpx;
+  border-radius: 999rpx;
+  background: #ffffff;
+  color: #334155;
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 56rpx;
+  padding: 0 20rpx;
+  box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.08);
+}
+
+.tool.warm {
+  border: 1rpx solid #fde68a;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.search-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 18rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 30rpx rgba(15, 23, 42, 0.08);
+}
+
+.search-input {
+  flex: 1;
+  height: 64rpx;
+  border-radius: 14rpx;
+  background: #f1f5f9;
+  color: #111827;
+  font-size: 26rpx;
+  padding: 0 20rpx;
+}
+
+.add-btn {
+  width: 132rpx;
+  border-radius: 16rpx;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 26rpx;
+  font-weight: 900;
+  line-height: 64rpx;
+}
+
+.tabs {
+  white-space: nowrap;
+  margin-top: 18rpx;
+}
+
+.compact {
+  margin-top: 10rpx;
+}
+
+.tab,
+.date-tab {
+  display: inline-block;
+  margin-right: 12rpx;
+  border-radius: 16rpx;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 23rpx;
+  font-weight: 800;
+  line-height: 56rpx;
+  padding: 0 22rpx;
+}
+
+.date-tab {
+  border-radius: 999rpx;
+  background: transparent;
+}
+
+.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.active-dark {
+  background: #334155;
+  color: #ffffff;
+}
+
+.stats {
+  margin-top: 20rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: linear-gradient(135deg, #1d4ed8, #0f766e);
+  color: #ffffff;
+}
+
+.stat-main {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  opacity: 0.86;
+}
+
+.stat-value {
+  font-size: 52rpx;
+  font-weight: 900;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10rpx;
+  margin-top: 18rpx;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 23rpx;
+}
+
+.empty {
+  margin-top: 36rpx;
+  padding: 70rpx 24rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  text-align: center;
+}
+
+.empty-title {
+  color: #1f2937;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+
+.empty-text {
+  margin-top: 10rpx;
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.room-card {
+  margin-top: 18rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 28rpx rgba(15, 23, 42, 0.07);
+}
+
+.room-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.room-no {
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.tenant {
+  margin-top: 6rpx;
+  color: #64748b;
+  font-size: 23rpx;
+}
+
+.amount {
+  color: #dc2626;
+  font-size: 36rpx;
+  font-weight: 900;
+}
+
+.bill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 18rpx;
+  color: #64748b;
+  font-size: 23rpx;
+}
+
+.actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.mini {
+  flex: 1;
+  border-radius: 14rpx;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 23rpx;
+  font-weight: 800;
+  line-height: 58rpx;
+}
+
+.mini.paid {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.mini.unpaid {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.mini.danger {
+  color: #dc2626;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  padding: 40rpx;
+}
+
+.contact-modal {
+  width: 100%;
+  max-width: 620rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  padding: 34rpx;
+}
+
+.modal-title {
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.modal-desc {
+  margin-top: 8rpx;
+  color: #64748b;
+  font-size: 24rpx;
+}
+
+.wechat-box {
+  margin-top: 24rpx;
+  padding: 22rpx;
+  border-radius: 18rpx;
+  background: #f8fafc;
+}
+
+.wechat-label {
+  display: block;
+  color: #94a3b8;
+  font-size: 22rpx;
+}
+
+.wechat-id {
+  display: block;
+  margin-top: 6rpx;
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.copy-btn,
+.close-btn {
+  margin-top: 20rpx;
+  border-radius: 18rpx;
+  font-size: 26rpx;
+  font-weight: 900;
+  line-height: 72rpx;
+}
+
+.copy-btn {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.close-btn {
+  background: #f1f5f9;
+  color: #334155;
+}

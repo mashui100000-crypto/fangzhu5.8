@@ -1,0 +1,77 @@
+<view class="page safe-bottom">
+  <view class="section">
+    <view class="section-title">房间信息</view>
+    <view class="field">
+      <text>房号</text>
+      <input value="{{room.roomNo}}" data-field="roomNo" placeholder="例如 A101" bindinput="updateField" />
+    </view>
+    <view class="field">
+      <text>月租</text>
+      <input type="digit" value="{{room.rent}}" data-field="rent" placeholder="1000" bindinput="updateField" />
+    </view>
+    <view class="field">
+      <text>押金</text>
+      <input type="digit" value="{{room.deposit}}" data-field="deposit" placeholder="可选" bindinput="updateField" />
+    </view>
+    <view class="field picker-field">
+      <text>入住日期</text>
+      <picker mode="date" value="{{room.moveInDate}}" bindchange="onMoveInDateChange">
+        <view class="picker-value">{{room.moveInDate || '选择日期'}}</view>
+      </picker>
+    </view>
+    <view class="field">
+      <text>收租日</text>
+      <input type="number" value="{{room.payDay}}" bindinput="onPayDayChange" />
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">租客信息</view>
+    <view class="field">
+      <text>姓名</text>
+      <input value="{{room.tenantName}}" data-field="tenantName" placeholder="可选" bindinput="updateField" />
+    </view>
+    <view class="field">
+      <text>手机号</text>
+      <input type="number" value="{{room.tenantPhone}}" data-field="tenantPhone" placeholder="可选" bindinput="updateField" />
+    </view>
+    <view class="field">
+      <text>身份证</text>
+      <input value="{{room.tenantIdCard}}" data-field="tenantIdCard" placeholder="可选" bindinput="updateField" />
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">水电读数</view>
+    <view class="two-col">
+      <view class="field stacked">
+        <text>上月电表</text>
+        <input type="digit" value="{{room.elecPrev}}" data-field="elecPrev" bindinput="updateField" />
+      </view>
+      <view class="field stacked">
+        <text>本月电表</text>
+        <input type="digit" value="{{room.elecCurr}}" data-field="elecCurr" bindinput="updateField" />
+      </view>
+    </view>
+    <view class="field">
+      <text>电费单价</text>
+      <input type="digit" value="{{room.fixedElecPrice}}" data-field="fixedElecPrice" bindinput="updateField" />
+    </view>
+    <view class="two-col">
+      <view class="field stacked">
+        <text>上月水表</text>
+        <input type="digit" value="{{room.waterPrev}}" data-field="waterPrev" bindinput="updateField" />
+      </view>
+      <view class="field stacked">
+        <text>本月水表</text>
+        <input type="digit" value="{{room.waterCurr}}" data-field="waterCurr" bindinput="updateField" />
+      </view>
+    </view>
+    <view class="field">
+      <text>水费单价</text>
+      <input type="digit" value="{{room.fixedWaterPrice}}" data-field="fixedWaterPrice" bindinput="updateField" />
+    </view>
+  </view>
+
+  <button class="save-btn" bindtap="saveRoom">保存房间</button>
+</view>

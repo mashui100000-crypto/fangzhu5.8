@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/edit/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "房租管家",
+    "navigationBarBackgroundColor": "#f8fafc",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f3f6fb"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

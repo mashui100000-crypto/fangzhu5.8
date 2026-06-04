@@ -1,0 +1,77 @@
+<view class="page safe-bottom">
+  <view class="header">
+    <view>
+      <view class="title">房租管家</view>
+      <view class="subtitle">微信小程序版 · iOS / 安卓通用</view>
+    </view>
+    <view class="toolbar">
+      <button class="tool" bindtap="startNewMonth">新月份</button>
+      <button class="tool warm" bindtap="openContact">联系作者</button>
+    </view>
+  </view>
+
+  <view class="search-card">
+    <input class="search-input" value="{{searchInput}}" placeholder="搜索房号、租客、手机号" confirm-type="search" bindinput="onSearchInput" />
+    <button class="add-btn" bindtap="addRoom">添加</button>
+  </view>
+
+  <scroll-view scroll-x class="tabs">
+    <button wx:for="{{buildingTabs}}" wx:key="value" class="tab {{item.activeClass}}" data-value="{{item.value}}" bindtap="setBuilding">{{item.label}}</button>
+  </scroll-view>
+
+  <scroll-view scroll-x class="tabs compact">
+    <button wx:for="{{payDayTabs}}" wx:key="value" class="date-tab {{item.activeClass}}" data-value="{{item.value}}" bindtap="setPayDay">{{item.label}}</button>
+  </scroll-view>
+
+  <view class="stats">
+    <view class="stat-main">
+      <text class="stat-label">应收总计</text>
+      <text class="stat-value">¥{{stats.total}}</text>
+    </view>
+    <view class="stat-grid">
+      <view>已收 ¥{{stats.collected}}</view>
+      <view>房租 ¥{{stats.rent}}</view>
+      <view>水费 ¥{{stats.water}}</view>
+      <view>电费 ¥{{stats.elec}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{filteredRooms.length === 0}}" class="empty">
+    <view class="empty-title">没有数据</view>
+    <view class="empty-text">点击“添加”录入第一个房间</view>
+  </view>
+
+  <view wx:for="{{filteredRooms}}" wx:key="id" class="room-card">
+    <view class="room-top">
+      <view>
+        <view class="room-no">{{item.roomNo || '未命名'}}</view>
+        <view class="tenant">{{item.tenantName || '未填写租客'}} · {{item.payDay}}号收租</view>
+      </view>
+      <view class="amount">¥{{item.totalText}}</view>
+    </view>
+    <view class="bill-row">
+      <text>房租 ¥{{item.rentText}}</text>
+      <text>水 ¥{{item.waterText}}</text>
+      <text>电 ¥{{item.elecText}}</text>
+    </view>
+    <view class="actions">
+      <button class="mini {{item.statusClass}}" data-id="{{item.id}}" bindtap="toggleStatus">{{item.statusText}}</button>
+      <button class="mini" data-id="{{item.id}}" bindtap="copyBill">账单</button>
+      <button class="mini" data-id="{{item.id}}" bindtap="editRoom">编辑</button>
+      <button class="mini danger" data-id="{{item.id}}" bindtap="deleteRoom">删除</button>
+    </view>
+  </view>
+
+  <view wx:if="{{showContact}}" class="modal-mask" bindtap="closeContact">
+    <view class="contact-modal" catchtap="noop">
+      <view class="modal-title">作者联系方式</view>
+      <view class="modal-desc">问题反馈、定制功能都可以联系</view>
+      <view class="wechat-box">
+        <text class="wechat-label">微信</text>
+        <text class="wechat-id">pitayaaaaaaaaaaaaaaa</text>
+      </view>
+      <button class="copy-btn" bindtap="copyWechat">复制微信号</button>
+      <button class="close-btn" bindtap="closeContact">关闭</button>
+    </view>
+  </view>
+</view>
